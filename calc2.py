@@ -90,8 +90,9 @@ class Interpreter(object):
             if self.current_char == '/':
                 self.advance()
                 return Token(DIVISION, '/')
-
-            self.error()
+            
+            self.advance()
+            return Token(EOF, None)
 
         return Token(EOF, None)
 
@@ -114,11 +115,12 @@ class Interpreter(object):
         # set current token to the first token taken from the input
         self.current_token = self.get_next_token()
         result = 0
-        while self.current_token != EOF:
-            # we expect the current token to be an integer
-            left = self.current_token
-            self.eat(INTEGER)
+        # we expect the current token to be an integer
 
+        while self.current_token.type != EOF:
+            left = self.current_token
+
+            self.eat(INTEGER)
             # we expect the current token to be either a '+' or '-'
             op = self.current_token
             if op.type == PLUS:
@@ -129,6 +131,8 @@ class Interpreter(object):
                 self.eat(MULTI)
             elif op.type == DIVISION:
                 self.eat(DIVISION)
+            elif op.type == EOF:
+                break
 
             # we expect the current token to be an integer
             right = self.current_token
@@ -149,6 +153,8 @@ class Interpreter(object):
                 result += left.value * right.value
             elif op.type == DIVISION:
                 result += left.value / right.value
+                
+            self.current_token = Token(INTEGER, result)
         return result
 
 
