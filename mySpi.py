@@ -22,6 +22,7 @@ class Token(object):
 
     def __str__(self):
         """String representation of the class instance.
+
         Examples:
             Token(INTEGER, 3)
             Token(PLUS, '+')
@@ -69,6 +70,7 @@ class Lexer(object):
 
     def get_next_token(self):
         """Lexical analyzer (also known as scanner or tokenizer)
+
         This method is responsible for breaking a sentence
         apart into tokens. One token at a time.
         """
@@ -132,11 +134,11 @@ class Num(AST):
         self.token = token
         self.value = token.value
 
-
-class UnaryOp(AST):
-    def __init__(self, op, expr):
-        self.token = self.op = op
-        self.expr = expr
+class UniaryOp(AST):
+    def __init__(self, op, value):
+        self.token = op
+        self.op = op
+        self.value = value
 
 
 class Parser(object):
@@ -159,17 +161,9 @@ class Parser(object):
             self.error()
 
     def factor(self):
-        """factor : (PLUS | MINUS) factor | INTEGER | LPAREN expr RPAREN"""
+        """factor : INTEGER | LPAREN expr RPAREN"""
         token = self.current_token
-        if token.type == PLUS:
-            self.eat(PLUS)
-            node = UnaryOp(token, self.factor())
-            return node
-        elif token.type == MINUS:
-            self.eat(MINUS)
-            node = UnaryOp(token, self.factor())
-            return node
-        elif token.type == INTEGER:
+        if token.type == INTEGER:
             self.eat(INTEGER)
             return Num(token)
         elif token.type == LPAREN:
@@ -177,6 +171,14 @@ class Parser(object):
             node = self.expr()
             self.eat(RPAREN)
             return node
+        elif token.type == MINUS:
+            self.eat(MINUS)
+            node = self.factor()
+            return UniaryOp(token, node)
+        elif token.type == PLUS:
+            self.eat(PLUS)
+            node = self.factor()
+            return UniaryOp(token, node)
 
     def term(self):
         """term : factor ((MUL | DIV) factor)*"""
@@ -197,7 +199,7 @@ class Parser(object):
         """
         expr   : term ((PLUS | MINUS) term)*
         term   : factor ((MUL | DIV) factor)*
-        factor : (PLUS | MINUS) factor | INTEGER | LPAREN expr RPAREN
+        factor : INTEGER | LPAREN expr RPAREN
         """
         node = self.term()
 
@@ -213,10 +215,7 @@ class Parser(object):
         return node
 
     def parse(self):
-        node = self.expr()
-        if self.current_token.type != EOF:
-            self.error()
-        return node
+        return self.expr()
 
 
 ###############################################################################
@@ -247,34 +246,34 @@ class Interpreter(NodeVisitor):
         elif node.op.type == MUL:
             return self.visit(node.left) * self.visit(node.right)
         elif node.op.type == DIV:
-            return self.visit(node.left) // self.visit(node.right)
+            return self.visit(node.left) / self.visit(node.right)
 
     def visit_Num(self, node):
         return node.value
-
-    def visit_UnaryOp(self, node):
-        op = node.op.type
-        if op == PLUS:
-            return +self.visit(node.expr)
-        elif op == MINUS:
-            return -self.visit(node.expr)
+    
+    def visit_UniaryOp(self, node):
+        if node.op.type == PLUS:
+            return self.visit(node.value)
+        elif node.op.type == MINUS:
+            return -self.visit(node.value)
 
     def interpret(self):
         tree = self.parser.parse()
-        if tree is None:
-            return ''
         return self.visit(tree)
 
 
 def main():
     while True:
         try:
-            text = input('spi> ')
+            try:
+                text = raw_input('mySpi> ')
+            except NameError:  # Python3
+                text = input('mySpi> ')
         except EOFError:
             break
         if not text:
             continue
-        
+
         print(text)
         lexer = Lexer(text)
         parser = Parser(lexer)
