@@ -1,4 +1,4 @@
-enum TokenEnum {
+export enum TokenEnum {
     PLUS = 'PLUS',
     MINUS = 'MINUS',
     MUL = 'MUL',
@@ -9,7 +9,7 @@ enum TokenEnum {
     EOF = 'EOF',
 }
 
-class Token {
+export class Token {
     public type: TokenEnum;
     public value: string;
     constructor(type, value) {
@@ -79,5 +79,6 @@ export default class Lexer {
             this._tokens.push(token);
         } while(token?.type !== TokenEnum.EOF)
         console.log('lexer parse', this._tokens);
+        return this._tokens;
     }
 }
