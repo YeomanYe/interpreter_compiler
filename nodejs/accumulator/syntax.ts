@@ -1,6 +1,7 @@
 import {Token, TokenEnum} from './lexer';
 
-abstract class Node {
+export abstract class Node {
+    abstract name;
     constructor() {
         
     }
@@ -22,8 +23,10 @@ class UnaryOperator extends Node {
 
 class Factory extends Node {
     readonly name = 'factory';
-    constructor(readonly value) {
+    value: number;
+    constructor(readonly token) {
         super();
+        this.value = token.value;
     }
 }
 
@@ -79,11 +82,11 @@ export default class Syntax {
             if (this.token.type === TokenEnum.MUL) {
                 op = this.token;
                 this._eat(TokenEnum.MUL);
-                right = this.token;
+                right = this._parseFactor();
             } else if(this.token.type === TokenEnum.DIV) {
                 op = this.token;
                 this._eat(TokenEnum.DIV);
-                right = this.token;
+                right = this._parseFactor();
             }
             left = new BinaryOperator(left, right, op)
         }
@@ -97,14 +100,15 @@ export default class Syntax {
             if (this.token.type === TokenEnum.PLUS) {
                 op = this.token;
                 this._eat(TokenEnum.PLUS);
-                right = this.token;
+                right = this._parseMul();
             } else if(this.token.type === TokenEnum.MINUS) {
                 op = this.token;
                 this._eat(TokenEnum.MINUS);
-                right = this.token;
+                right = this._parseMul();
             }
             left = new BinaryOperator(left, right, op);
         }
+        console.log(left, this._position);
         return left;
     }
     parse() {
