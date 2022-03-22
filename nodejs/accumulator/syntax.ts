@@ -1,4 +1,32 @@
 import {Token, TokenEnum} from './lexer';
+
+abstract class Node {
+    constructor() {
+        
+    }
+}
+
+class BinaryOperator extends Node {
+    readonly name = 'binary';
+    constructor(readonly left, readonly right, readonly op) {
+        super();
+    }
+}
+
+class UnaryOperator extends Node {
+    readonly name = 'unary';
+    constructor(readonly op, readonly value) {
+        super();
+    }
+}
+
+class Factory extends Node {
+    readonly name = 'factory';
+    constructor(readonly value) {
+        super();
+    }
+}
+
 export default class Syntax {
     
     private _position: number = 0;
@@ -34,36 +62,50 @@ export default class Syntax {
             this._eat(TokenEnum.RIGHT_BRACKET);
         } else if (token.type === TokenEnum.NUM) {
             this._eat(TokenEnum.NUM);
-            result = parseInt(token.value, 10);
+            result = new Factory(token);
+        } else if (token.type === TokenEnum.PLUS) {
+            this._eat(TokenEnum.PLUS);
+            result = new UnaryOperator(token, this._parseFactor());
+        } else if (token.type === TokenEnum.MINUS) {
+            this._eat(TokenEnum.MINUS);
+            result = new UnaryOperator(token, this._parseFactor());
         }
         return result;
     }
     private _parseMul() {
-        let result = this._parseFactor();
+        let left = this._parseFactor();
         while (this.token.type === TokenEnum.MUL || this.token.type === TokenEnum.DIV) {
+            let right, op;
             if (this.token.type === TokenEnum.MUL) {
+                op = this.token;
                 this._eat(TokenEnum.MUL);
-                result *= this._parseFactor();
+                right = this.token;
             } else if(this.token.type === TokenEnum.DIV) {
+                op = this.token;
                 this._eat(TokenEnum.DIV);
-                result /= this._parseFactor();
+                right = this.token;
             }
+            left = new BinaryOperator(left, right, op)
         }
-        return result;
+        return left;
     }
     // 解析
     private _parseAdd() {
-        let result = this._parseMul();
+        let left = this._parseMul();
         while (this.token.type === TokenEnum.PLUS || this.token.type === TokenEnum.MINUS) {
+            let op, right;
             if (this.token.type === TokenEnum.PLUS) {
+                op = this.token;
                 this._eat(TokenEnum.PLUS);
-                result += this._parseMul();
+                right = this.token;
             } else if(this.token.type === TokenEnum.MINUS) {
+                op = this.token;
                 this._eat(TokenEnum.MINUS);
-                result -= this._parseMul();
+                right = this.token;
             }
+            left = new BinaryOperator(left, right, op);
         }
-        return result;
+        return left;
     }
     parse() {
         return this._parseAdd();
