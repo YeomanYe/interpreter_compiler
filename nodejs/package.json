@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start-acc": "ts-node ./accumulator/index.ts"
+    "start-acc": "ts-node ./accumulator/index.ts",
+    "start-pas": "ts-node ./pascal/index.ts",
   },
   "author": "",
   "license": "ISC",
